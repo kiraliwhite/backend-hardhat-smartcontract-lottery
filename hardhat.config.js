@@ -25,6 +25,14 @@ module.exports = {
       accounts: [PRIVATE_KEY],
     },
   },
+  gasReporter: {
+    enabled: false,
+    outputFile: "gas-reporter.txt",
+    noColors: true,
+    currency: "USD",
+    //gasPriceApi:
+    //  "https://api.etherscan.io/api?module=proxy&action=eth_gasPrice",
+  },
   solidity: "0.8.17",
   namedAccounts: {
     deployer: {
@@ -33,5 +41,8 @@ module.exports = {
     player: {
       default: 1,
     },
+  },
+  mocha: {
+    timeout: 300000, //300 seconds
   },
 };
