@@ -54,7 +54,8 @@ developmentChains.includes(network.name)
               resolve();
             });
             //在進入promise前先入金,並等待chainlink keepers自動觸發checkUpkeep及performUpkeep
-            await raffle.enterRaffle({ value: raffleEntranceFee });
+            const tx = await raffle.enterRaffle({ value: raffleEntranceFee });
+            await tx.wait(1);
             //先抓取deployer帳戶的初始餘額,因為只有deployer入金,所以獲勝者也是deployer
             const winnerStartingBalance = await accounts[0].getBalance();
           });
