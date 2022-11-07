@@ -55,6 +55,7 @@ developmentChains.includes(network.name)
             });
             //在進入promise前先入金,並等待chainlink keepers自動觸發checkUpkeep及performUpkeep
             const tx = await raffle.enterRaffle({ value: raffleEntranceFee });
+            //等待一個區塊時間在抓餘額,就會是扣掉Gas Fee之後的餘額
             await tx.wait(1);
             //先抓取deployer帳戶的初始餘額,因為只有deployer入金,所以獲勝者也是deployer
             const winnerStartingBalance = await accounts[0].getBalance();
