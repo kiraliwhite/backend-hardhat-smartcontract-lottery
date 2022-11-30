@@ -2,7 +2,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 const { getNamedAccounts, deployments, ethers, network } = require("hardhat");
 const { assert, expect } = require("chai");
 
-//如果不在本地區塊鏈,是在測試網或主網,才需要執行測試
+//如果在本地區塊鏈,才需要執行測試
 !developmentChains.includes(network.name)
   ? describe.skip
   : describe("Raffle Unit Tests", async () => {
