@@ -5,8 +5,11 @@ async function mockKeepers() {
   //checkData是轉換UTF-8字串為Uint8Array之後,在使用keccak256加密之後的結果
   //checkData = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
   const checkData = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(""));
+  const raffleState = await raffle.getRaffleState();
+  console.log(raffleState);
   //使用callStatic假裝呼叫checkUpkeep,upkeepNeeded會是true或是false
   const { upkeepNeeded } = await raffle.callStatic.checkUpkeep(checkData);
+
   //若為true
   if (upkeepNeeded) {
     //執行performUpkeep,傳入空值,因為合約內沒有定義performUpkeep的輸入參數
@@ -27,7 +30,6 @@ async function mockKeepers() {
 
 async function mockVrf(requestId, raffle) {
   console.log("We on a local network? Ok let's pretend...");
-  //抓取VRFCoordinatorV2Mock合約
   const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
   //呼叫Mock的function, 該function會呼叫Mock內的fulfillRandomWordsWithOverride,取得隨機數
   //隨機數會傳給VRFConsumerBaseV2的virtual fulfillRandomWords,

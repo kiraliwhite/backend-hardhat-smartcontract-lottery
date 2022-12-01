@@ -48,10 +48,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   });
 
   //----------------------------
-  //if (developmentChains.includes(network.name)) {
-  //  const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
-  //  await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address);
-  //}
+  if (developmentChains.includes(network.name)) {
+    const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
+    await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address);
+  }
 
   if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
     log("Verifying...");

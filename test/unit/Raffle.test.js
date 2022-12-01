@@ -17,9 +17,9 @@ const { assert, expect } = require("chai");
         vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock", deployer);
         raffleEntranceFee = await raffle.getEntranceFee();
         //後續測試"it doesn't allow entrance when raffle is calculating"時,需要假裝為chainlink network node呼叫checkUpkeep,performUpkeep
-        //在呼叫requestRandomWords時要註冊成為consumer
-        const subscriptionId = raffle.getSubId();
-        const transactionResponse = await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address);
+        //在呼叫requestRandomWords時要註冊成為consumer, 如果已經寫在deploy script內 就不用寫
+        // const subscriptionId = raffle.getSubId();
+        // const transactionResponse = await vrfCoordinatorV2Mock.addConsumer(subscriptionId, raffle.address);
         interval = await raffle.getInterval();
       });
 
