@@ -9,10 +9,13 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId;
-  let vrfCoordinatorV2Address, subscriptionId;
+  let vrfCoordinatorV2Address, subscriptionId, ethUsdPriceFeedAddress;
 
   //若偵測到hardhat network
   if (developmentChains.includes(network.name)) {
+    const ethUsdAggregator = await deployments.get("MockV3Aggregator");
+    ethUsdPriceFeedAddress = ethUsdAggregator.address;
+
     //則使用getContract抓取部署的合約VRFCoordinatorV2Mock
     const vrfCoordinatorV2Mock = await ethers.getContract("VRFCoordinatorV2Mock");
     vrfCoordinatorV2Address = vrfCoordinatorV2Mock.address;
@@ -28,6 +31,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     //若在其他網路,則偵測chainId,使用helper-hardhat-config中指定的地址.
     vrfCoordinatorV2Address = networkConfig[chainId]["vrfCoordinatorV2"];
     subscriptionId = networkConfig[chainId]["subscriptionId"];
+    ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"];
   }
 
   //將要傳入raffle合約的constructor的變數使用物件包起來,注意順序要對,參考raffle合約的constructor
@@ -38,6 +42,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     subscriptionId,
     networkConfig[chainId]["callbackGasLimit"],
     networkConfig[chainId]["interval"],
+    ethUsdPriceFeedAddress,
   ];
 
   const raffle = await deploy("Raffle", {

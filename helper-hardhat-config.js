@@ -9,6 +9,7 @@ const networkConfig = {
     subscriptionId: "6170",
     callbackGasLimit: "500000", //500,000
     interval: "30", //每30秒檢查一次
+    ethUsdPriceFeed: "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e", // goerli 測試網上的eth/usd 餵價智能合約地址
   },
   31337: {
     name: "hardhat",
@@ -21,7 +22,14 @@ const networkConfig = {
 
 const developmentChains = ["hardhat", "localhost"];
 
+const DECIMALS = "8";
+//定義小數點後8位
+const INITIAL_ANSWER = "130000000000";
+//定義以太幣對美元為1300元,然後小數點八位所以再加上8個0
+
 module.exports = {
   networkConfig,
   developmentChains,
+  DECIMALS,
+  INITIAL_ANSWER,
 };

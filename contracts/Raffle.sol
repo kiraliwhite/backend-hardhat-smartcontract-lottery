@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 error Raffle__NotEnoughFee();
 error Raffle__TransferFailed();
@@ -23,6 +24,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     CALCULATING
   }
 
+  //為了要顯示以太幣對USD,所以宣告全域變數
+  AggregatorV3Interface private immutable priceFeed;
+
   /* 狀態變數宣告 */
   uint256 private immutable i_entranceFee;
   address payable[] private s_players;
@@ -40,6 +44,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
   RaffleState private s_raffleState; //使用新類型宣告一個變數,用來存放合約當前的狀態,是open還是計算中
   uint256 private s_lastTimeStamp; //上一個區塊時間,宣告此參數用於計算經過了多久
   uint256 private immutable i_interval; //設定時間間隔
+  uint256 private s_winnerBalance; //獲勝者拿到多少獎金
 
   /* 事件宣告 */
   //宣告一個event,輸出一個地址
@@ -59,7 +64,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     bytes32 _gasLane,
     uint64 _subscriptionId,
     uint32 _callbackGasLimit,
-    uint256 _interval
+    uint256 _interval,
+    address priceFeedAddress
   ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
     i_entranceFee = _entranceFee;
     //因為要使用VRFCoordinatorV2Interface合約內的功能,因此將ABI與合約地址做關聯,塞到i_COORDINATOR內
@@ -71,6 +77,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     s_raffleState = RaffleState.OPEN; //這行與上面那行相等
     s_lastTimeStamp = block.timestamp; //初始化,先將s_lastTimeStamp設定為當前的block.timestamp,就有基準能夠比較
     i_interval = _interval; //設定時間間隔
+    priceFeed = AggregatorV3Interface(priceFeedAddress);
   }
 
   //入金,紀錄入金帳戶地址到陣列中
@@ -148,6 +155,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     address payable recentWinner = s_players[indexOfWinner];
     //將勝利者的地址存為全域變數
     s_recentWinner = recentWinner;
+    //將勝利者獲得的金額,存為全域變數
+    s_winnerBalance = address(this).balance;
     //選出勝利者後將s_players陣列歸0
     s_players = new address payable[](0);
     //將timeStamp重新reset,用來重新計算經過特定時間才選出獲勝者
@@ -203,12 +212,6 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     return REQUEST_CONFIRMATIONS;
   }
 
-  //中獎機率
-  function getWinnerChance() public view returns (uint256) {
-    uint256 chance = NUM_WORDS / s_players.length;
-    return chance;
-  }
-
   //顯示間隔時間
   function getInterval() public view returns (uint256) {
     return i_interval;
@@ -221,5 +224,27 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
 
   function getSubId() public view returns (uint256) {
     return i_subscriptionId;
+  }
+
+  //顯示下注次數,新加的
+  function getPlayerTimes() public view returns (uint256) {
+    uint256 times = 0;
+    for (uint256 i = 0; i < s_players.length; i++) {
+      if (msg.sender == s_players[i]) {
+        times++;
+      }
+    }
+    return times;
+  }
+
+  //顯示勝利者拿到多少錢
+  function getWinnerBalance() public view returns (uint256) {
+    return s_winnerBalance;
+  }
+
+  //顯示以太幣價
+  function getPrice() public view returns (uint256) {
+    (, int256 ethPrice, , , ) = priceFeed.latestRoundData();
+    return uint256(ethPrice * 1e10);
   }
 }
