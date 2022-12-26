@@ -27,6 +27,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
   //為了要顯示以太幣對USD,所以宣告全域變數
   AggregatorV3Interface private immutable priceFeed;
 
+  //為了要從外部修改interval,所以宣告owner
+  address private immutable i_owner;
+
   /* 狀態變數宣告 */
   uint256 private immutable i_entranceFee;
   address payable[] private s_players;
@@ -43,7 +46,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
   address payable private s_recentWinner;
   RaffleState private s_raffleState; //使用新類型宣告一個變數,用來存放合約當前的狀態,是open還是計算中
   uint256 private s_lastTimeStamp; //上一個區塊時間,宣告此參數用於計算經過了多久
-  uint256 private immutable i_interval; //設定時間間隔
+  uint256 private i_interval; //設定時間間隔
   uint256 private s_winnerBalance; //獲勝者拿到多少獎金
 
   /* 事件宣告 */
@@ -65,7 +68,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     uint64 _subscriptionId,
     uint32 _callbackGasLimit,
     uint256 _interval,
-    address priceFeedAddress
+    address _priceFeedAddress
   ) VRFConsumerBaseV2(_vrfCoordinatorV2) {
     i_entranceFee = _entranceFee;
     //因為要使用VRFCoordinatorV2Interface合約內的功能,因此將ABI與合約地址做關聯,塞到i_COORDINATOR內
@@ -77,7 +80,25 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     s_raffleState = RaffleState.OPEN; //這行與上面那行相等
     s_lastTimeStamp = block.timestamp; //初始化,先將s_lastTimeStamp設定為當前的block.timestamp,就有基準能夠比較
     i_interval = _interval; //設定時間間隔
-    priceFeed = AggregatorV3Interface(priceFeedAddress);
+    priceFeed = AggregatorV3Interface(_priceFeedAddress);
+    i_owner = msg.sender;
+  }
+
+  receive() external payable {
+    enterRaffle();
+  }
+
+  fallback() external payable {
+    enterRaffle();
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == i_owner);
+    _;
+  }
+
+  function setInterval(uint256 _interval) public onlyOwner {
+    i_interval = _interval;
   }
 
   //入金,紀錄入金帳戶地址到陣列中
@@ -88,6 +109,10 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatibleInterface {
     //檢查合約是否開啟
     if (s_raffleState != RaffleState.OPEN) {
       revert Raffle__ContractNotOpen();
+    }
+    //如果之前都沒有玩家,先把時間歸0,預防一入金就得獎
+    if (s_players.length == 0) {
+      s_lastTimeStamp = block.timestamp;
     }
     s_players.push(payable(msg.sender));
     //觸發event將入金的玩家地址顯示
